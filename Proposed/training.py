@@ -12,6 +12,10 @@ import warnings
 from keras.models import Model
 import os
 import tensorflow as tf
+import torch
+torch.backends.cudnn.benchmark = False
+torch.backends.cudnn.enabled = True
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 from pathlib import Path
@@ -273,8 +277,11 @@ def validate_gan (generator, val_dataloader, feature_extractor, L1_loss, MSE_los
                 loss = mse_loss + features
             
                 val_running_loss_G+=loss.detach().item()
-                Image.fromarray(np.array(feature_extractor.to_numpy(fake_output[0].to('cpu'))).astype('uint8')).save('TEST_08.jpg')
-            
+                # Image.fromarray(np.array(feature_extractor.to_numpy(fake_output[0].to('cpu'))).astype('uint8')).save('TEST_08.jpg')
+                img = fake_output[0].detach().cpu().clamp(0, 1)
+                img = (img.permute(1, 2, 0).numpy() * 255).astype(np.uint8)
+                Image.fromarray(img).save("TEST_08.jpg")
+
                 steps+=1
                 postfix={
                     'Running_loss': (val_running_loss_G)/steps,
@@ -317,8 +324,11 @@ def fit_gan(generator, train_dataloader, optimizer_G, feature_extractor, L1_loss
             optimizer_G.step()
             
             train_running_loss_G+=loss.detach().item()
-            Image.fromarray(np.array(feature_extractor.to_numpy(fake_output[0].to('cpu'))).astype('uint8')).save('TEST_08.jpg')
-            
+            # Image.fromarray(np.array(feature_extractor.to_numpy(fake_output[0].to('cpu'))).astype('uint8')).save('TEST_08.jpg')
+            img = fake_output[0].detach().cpu().clamp(0, 1)
+            img = (img.permute(1, 2, 0).numpy() * 255).astype(np.uint8)
+            Image.fromarray(img).save("TEST_08.jpg")
+
             steps+=1
             postfix={
                 'Running_loss': (train_running_loss_G)/steps,
