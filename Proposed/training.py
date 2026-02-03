@@ -361,7 +361,7 @@ def main():
         current_epoch, generator, optimizer_G, train_loss_g, val_loss_g, early_stopping = load_model(generator, args.model)
     
     #scheduler_G = torch.optim.lr_scheduler.LambdaLR(optimizer_G, lr_lambda=LambdaLR(200, 2, 2).step, verbose=True, last_epoch=-1)
-    scheduler_G = lr_scheduler.ReduceLROnPlateau(optimizer_G, factor=0.8, patience=2, verbose=True)
+    scheduler_G = lr_scheduler.ReduceLROnPlateau(optimizer_G, factor=0.8, patience=2)#, verbose=True)
  
 #    for _ in range(0, current_epoch):
 #        scheduler_G.step()
