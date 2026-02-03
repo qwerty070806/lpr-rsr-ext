@@ -81,6 +81,7 @@ def build_icpr_samples(root_dir):
                 layout = meta.get("layout", "unknown")
                 tp = meta.get("type", "car")
 
+
                 # Pair lr-i with hr-i
                 for i in range(1, 6):
                     lr = track / f"lr-{i:03d}.png"
@@ -172,9 +173,10 @@ class customDataset(Dataset):
             if augLR is not None:
                 imgLR = augLR(image=imgLR)["image"]
 
-        plate = meta["plate_text"]
-        layout = meta.get("plate_layout", "unknown")
-        tp = "car"
+        plate = sample["plate"]
+        layout = sample["layout"]
+        tp = sample["type"]
+
 
 
         # Pad to fixed ratio
@@ -261,4 +263,5 @@ def load_dataset(root, batch_size, mode, pin_memory, num_workers):
 
 
 print("Hi")
+
 
