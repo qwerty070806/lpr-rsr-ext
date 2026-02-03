@@ -16,8 +16,25 @@ from torch.utils.data import Dataset, DataLoader
 # Image sizes used by the SR network
 # -------------------------------------------------
 
-IMG_LR = (40, 20)
-IMG_HR = (160, 80)
+IMG_LR = (64, 32)
+IMG_HR = (256, 128)
+
+def crop_from_corners(img, corners):
+
+    pts = np.array([
+        corners["top-left"],
+        corners["top-right"],
+        corners["bottom-right"],
+        corners["bottom-left"],
+    ])
+
+    x_min = int(min(p[0] for p in pts))
+    y_min = int(min(p[1] for p in pts))
+    x_max = int(max(p[0] for p in pts))
+    y_max = int(max(p[1] for p in pts))
+
+    return img[y_min:y_max, x_min:x_max]
+
 
 # -------------------------------------------------
 # Build ICPR LR–HR pairs from track folders
@@ -71,12 +88,15 @@ def build_icpr_samples(root_dir):
 
                     if lr.exists() and hr.exists():
                         samples.append({
-                            "LR": lr.as_posix(),
-                            "HR": hr.as_posix(),
-                            "plate": plate,
-                            "layout": layout,
-                            "type": tp,
-                        })
+                        "LR": lr.as_posix(),
+                        "HR": hr.as_posix(),
+                        "plate": plate,
+                        "layout": layout,
+                        "type": tp,
+                        "corners_lr": meta["corners"][lr.name],
+                        "corners_hr": meta["corners"][hr.name],
+                    })
+
 
     print(f"[INFO] Loaded {len(samples)} LR–HR pairs from ICPR")
 
@@ -137,6 +157,9 @@ class customDataset(Dataset):
 
         imgHR = self.open_image(sample["HR"])
         imgLR = self.open_image(sample["LR"])
+        imgLR = crop_from_corners(imgLR, sample["corners_lr"])
+        imgHR = crop_from_corners(imgHR, sample["corners_hr"])
+
 
         # Random augmentation
         if self.augmentation:
@@ -149,9 +172,10 @@ class customDataset(Dataset):
             if augLR is not None:
                 imgLR = augLR(image=imgLR)["image"]
 
-        plate = sample["plate"]
-        layout = sample["layout"]
-        tp = sample["type"]
+        plate = meta["plate_text"]
+        layout = meta.get("plate_layout", "unknown")
+        tp = "car"
+
 
         # Pad to fixed ratio
         imgLR, _, _ = functions.padding(
@@ -237,3 +261,4 @@ def load_dataset(root, batch_size, mode, pin_memory, num_workers):
 
 
 print("Hi")
+
